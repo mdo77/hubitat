@@ -5,7 +5,9 @@ definition(
     description: "Use remote sensor for thermostat",
     category: "HVAC",
     iconUrl: "",
-    iconX2Url: "")
+    iconX2Url: "",
+    singleInstance: true
+    )
 
 preferences {
 	page(name: "mainPage")
