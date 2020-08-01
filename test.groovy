@@ -6,7 +6,8 @@ definition(
     category: "HVAC",
     iconUrl: "",
     iconX2Url: "",
-    singleInstance: true
+    singleInstance: true,
+    importUrl: "https://raw.githubusercontent.com/mdo77/hubitat/master/test.groovy"
     )
 
 preferences {
