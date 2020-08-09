@@ -30,7 +30,7 @@ def mainPage() {
         else {
             def childApps = getAllChildApps()
             def childVer = "Initial Setup - Version Unknown"
-            section("Create a new remote sensor mapping.") {
+            section("Create a new thermostat boost.") {
                 app(name: "childApps", appName: "Thermostat Boost (Child)", namespace: "mdo", title: "New Thermostat Boost", multiple: true)
             }
         }
