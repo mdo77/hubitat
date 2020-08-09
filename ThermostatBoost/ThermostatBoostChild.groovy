@@ -56,7 +56,7 @@ void updated() {
 
 void initialize() {
     debugLog('Reinitializing')
-    unschedule('returnToSetting')
+    unschedule('switchOff')
     triggerSwitch.off()
     subscribe(triggerSwitch, 'switch', switchEvent)
 }
@@ -105,4 +105,5 @@ void switchOff() {
     triggerSwitch.off()
     debugLog("${app.label} completing.")
     updateSetpoint(0)
+    unschedule('switchOff')
 }
