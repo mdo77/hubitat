@@ -1,53 +1,48 @@
-/*
- *    Hubitat Import URL: https://raw.githubusercontent.com/mdo77/hubitat/master/ThermostatRemoteSensorParent.groovy
- *
- *
- */
-
 definition(
-    name: "Thermostat Remote Sensor",
-    namespace: "mdo",
+    name: 'Thermostat Remote Sensor',
+    namespace: 'mdo',
     singleInstance: true,
     author: "Mike O'Brian",
-    description: "",
-    category: "HVAC",
-    iconUrl: "",
-    iconX2Url: "",
-    iconX3Url: "",
-    importUrl: "https://raw.githubusercontent.com/mdo77/hubitat/master/ThermostatRemoteSensorParent.groovy"
+    description: '',
+    category: 'HVAC',
+    iconUrl: '',
+    iconX2Url: '',
+    iconX3Url: '',
+    importUrl: 'https://raw.githubusercontent.com/mdo77/hubitat/master/ThermostatRemoteSensorParent.groovy'
 )
 
 preferences {
-    page(name: "mainPage")
+    page(name: 'mainPage')
 }
 
+/* groovylint-disable-next-line MethodReturnTypeRequired, NoDef */
 def mainPage() {
-    return dynamicPage(name: "mainPage", title: "", install: true, uninstall: true) {
-        if(!state.trsInstalled) {
-            section("Hit Done to install TRS App!") {
+    return dynamicPage(name: 'mainPage', title: '', install: true, uninstall: true) {
+        /* groovylint-disable-next-line InvertedIfElse */
+        if (!state.trsInstalled) {
+            section('Hit Done to install TRS App!') {
             }
         }
         else {
+            /* groovylint-disable-next-line NoDef, UnusedVariable, VariableTypeRequired */
             def childApps = getAllChildApps()
-            def childVer = "Initial Setup - Version Unknown"
-            section("Create a new remote sensor mapping.") {
-                app(name: "childApps", appName: "Thermostat Remote Sensor (Child)", namespace: "mdo", title: "New Remote Thermostat Sensor", multiple: true)
+            section('Create a new remote sensor mapping.') {
+                app(name: 'childApps', appName: 'Thermostat Remote Sensor (Child)', namespace: 'mdo', title: 'New Remote Thermostat Sensor', multiple: true)
             }
         }
     }
 }
 
-def installed() {
+void installed() {
     state.trsInstalled = true
     initialize()
 }
 
-def updated() {
+void updated() {
     unsubscribe()
     initialize()
 }
 
-def initialize() {
+/* groovylint-disable-next-line EmptyMethod */
+void initialize() {
 }
-
-

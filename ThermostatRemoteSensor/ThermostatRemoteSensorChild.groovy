@@ -1,162 +1,155 @@
-/*
- *    Hubitat Import URL: https://raw.githubusercontent.com/mdo77/hubitat/master/ThermostatRemoteSensorChild.groovy
- *
- *
- */
-
-import hubitat.helper.RMUtils
-
 definition(
-    name: "Thermostat Remote Sensor (Child)",
-    namespace: "mdo",
+    name: 'Thermostat Remote Sensor (Child)',
+    namespace: 'mdo',
     author: "Mike O'Brian",
-    description: "Use remote temperature sensor(s) to control your thermostat",
-    category: "HVAC",
-    parent: "mdo:Thermostat Remote Sensor",
-    iconUrl: "",
-    iconX2Url: "",
-    iconX3Url: "",
-    importUrl: "https://raw.githubusercontent.com/mdo77/hubitat/master/ThermostatRemoteSensorChild.groovy"
+    description: 'Use remote temperature sensor(s) to control your thermostat',
+    category: 'HVAC',
+    parent: 'mdo:Thermostat Remote Sensor',
+    iconUrl: '',
+    iconX2Url: '',
+    iconX3Url: '',
+    importUrl: 'https://raw.githubusercontent.com/mdo77/hubitat/master/ThermostatRemoteSensorChild.groovy'
 )
 
 preferences {
-    page(name: "mainPage")
+    page(name: 'mainPage')
 }
 
+/* groovylint-disable-next-line MethodReturnTypeRequired, NoDef */
 def mainPage() {
-    dynamicPage(name: "mainPage", title: " ", install: true, uninstall: true) {
+    dynamicPage(name: 'mainPage', title: ' ', install: true, uninstall: true) {
         section {
             //input "thisName", "text", title: "Name this app", submitOnChange: true
-            input "selectedThermostat", "capability.thermostat", title: "Select Thermostat", submitOnChange: true, required: true, multiple: false
-            input "remoteSensors", "capability.temperatureMeasurement", title: "Select Remote Sensor(s)", submitOnChange: true, required: true, multiple: true
-            input "overrideSwitch", "capability.switch", title: "Activation Switch", submitOnChange: false, required: true, multiple: false
-            input "debugLogging", "bool", title: "Use Debug Logging", submitOnChange: false, required: false
-            input "doLog6x", "bool", title: "Extra Logging", submitOnChange: false, required: false
+            input 'selectedThermostat', 'capability.thermostat', title: 'Select Thermostat', submitOnChange: true, required: true, multiple: false
+            input 'remoteSensors', 'capability.temperatureMeasurement', title: 'Select Temperature Sensor(s)', submitOnChange: true, required: true, multiple: true
+            input 'setpointSensor', 'capability.temperatureMeasurement', title: 'Select Setpoint Sensor', submitOnChange: true, required: true, multiple: false
+            input 'overrideSwitch', 'capability.switch', title: 'Activation Switch', submitOnChange: false, required: true, multiple: false
+            input 'debugLogging', 'bool', title: 'Use Debug Logging', submitOnChange: false, required: false
+            input 'doLog6x', 'bool', title: 'Extra Logging', submitOnChange: false, required: false
             app.updateLabel(defaultLabel())
         }
     }
 }
-def debugLog(msg)
-{
-    if (debugLogging)
+void debugLog(String msg) {
+    if (debugLogging) {
         log.debug msg
+    }
 }
-def appIsActive() {
-    return overrideSwitch.currentState("switch").value == "on"
+boolean appIsActive() {
+    return overrideSwitch.currentState('switch').value == 'on'
 }
-def isRunning() {
-    def opState = selectedThermostat.currentState("thermostatOperatingState").value.toLowerCase()
-    return opState.indexOf("heat") >= 0 || opState.indexOf("cool") >= 0
+boolean isRunning() {
+    String opState = selectedThermostat.currentState('thermostatOperatingState').value.toLowerCase()
+    return opState.indexOf('heat') >= 0 || opState.indexOf('cool') >= 0
 }
 
-def defaultLabel() {
-    def label = "Thermostat Remote Sensor (Child)"
+String defaultLabel() {
+    String label = 'Thermostat Remote Sensor (Child)'
     if (selectedThermostat && remoteSensors) {
-        label ="${selectedThermostat.label} => "
-        def b = false
-        def sensorList = ""
+        label = "${selectedThermostat.label} => "
+        boolean b = false
+        String sensorList = ''
         remoteSensors.each {
-            if (b) sensorList += ", "
+            if (b) { sensorList += ', ' }
             b = true
+            /* groovylint-disable-next-line ImplicitClosureParameter */
             sensorList += it.label
         }
-        if (sensorList.indexOf(",") > 0) sensorList = "($sensorList)"
+        if (sensorList.indexOf(',') > 0) { sensorList = "($sensorList)" }
         label += sensorList
     }
     return label
 }
 
-def installed() {
+void installed() {
     state.trscInstalled = true
     initialize()
 }
 
-def updated() {
+void updated() {
     unsubscribe()
     initialize()
 }
-def monitorSetpoints(enable)
-{
-    if (!enable)
-    {
-        debugLog("Disabling setpoint monitoring")
-        unsubscribe(selectedThermostat, "coolingSetpoint", handleEvent)
-        unsubscribe(selectedThermostat, "heatingSetpoint", handleEvent)
-    }
-    else 
-    {
-        debugLog("Enabling setpoint monitoring")
-        subscribe(selectedThermostat, "coolingSetpoint", handleEvent)
-        subscribe(selectedThermostat, "heatingSetpoint", handleEvent)
+void monitorSetpoints(boolean enable) {
+    /* groovylint-disable-next-line InvertedIfElse */
+    if (!enable) {
+        debugLog('Disabling setpoint monitoring')
+        unsubscribe(selectedThermostat, 'coolingSetpoint', handleEvent)
+        unsubscribe(selectedThermostat, 'heatingSetpoint', handleEvent)
+    } else {
+        debugLog('Enabling setpoint monitoring')
+        subscribe(selectedThermostat, 'coolingSetpoint', handleEvent)
+        subscribe(selectedThermostat, 'heatingSetpoint', handleEvent)
     }
     pauseExecution(2000)
 }
-def initialize() {
-    unschedule("work2x")
-    unschedule("log6x")
-    subscribe(overrideSwitch, "switch", handleEvent)
+void initialize() {
+    unschedule('work2x')
+    unschedule('log6x')
+    subscribe(overrideSwitch, 'switch', handleEvent)
     monitorSetpoints(true)
-    subscribe(selectedThermostat, "thermostatMode", handleEvent)
-    subscribe(selectedThermostat, "temperature", handleEvent)
-    subscribe(selectedThermostat, "thermostatOperatingState", handleEvent)
-    subscribe(remoteSensors, "temperature", handleEvent)
+    subscribe(selectedThermostat, 'thermostatMode', handleEvent)
+    subscribe(selectedThermostat, 'temperature', handleEvent)
+    subscribe(selectedThermostat, 'thermostatOperatingState', handleEvent)
+    subscribe(remoteSensors, 'temperature', handleEvent)
     startLog6x()
+    debugLogState()
 }
-def thermostatState() {
-    return selectedThermostat.currentState("thermostatOperatingState").value
+String thermostatState() {
+    return selectedThermostat.currentState('thermostatOperatingState').value
 }
-def thermostatMode() {
-    return selectedThermostat.currentState("thermostatMode").value
+String thermostatMode() {
+    return selectedThermostat.currentState('thermostatMode').value
 }
-def thermostatSetpoint() {
-    def val = 0
-    def mode = thermostatMode().toLowerCase()
-    if (mode.indexOf("cool") >=0) {
-        return selectedThermostat.currentState("coolingSetpoint").value.toInteger()
-    } else if (mode.indexOf("heat") >= 0) {
-        return selectedThermostat.currentState("heatingSetpoint").value.toInteger()
-    } else return 0
+int thermostatSetpoint() {
+    String mode = thermostatMode().toLowerCase()
+    if (mode.indexOf('cool') >= 0) {
+        return selectedThermostat.currentState('coolingSetpoint').value.toInteger()
+    } else if (mode.indexOf('heat') >= 0) {
+        return selectedThermostat.currentState('heatingSetpoint').value.toInteger()
+    }
+    return 0
 }
-def thermostatTemperature() {
-    return Float.parseFloat(selectedThermostat.currentState("temperature").value)
+/* groovylint-disable-next-line NoFloat */
+Float thermostatTemperature() {
+    return Float.parseFloat(selectedThermostat.currentState('temperature').value)
 }
-def referenceSensorTemp() {
+/* groovylint-disable-next-line NoFloat */
+Float referenceSensorTemp() {
     // if heat then get min, if cool then get max
-    def temp = thermostatSetpoint()
-    def mode = thermostatMode().toLowerCase()
+    int temp = savedSetpoint()
+    String mode = thermostatMode().toLowerCase()
     remoteSensors.each {
-        def sensorTemp = Float.parseFloat(it.currentState("temperature").value)
-        if (mode.indexOf("heat") >= 0)
-        {
-            if (temp > sensorTemp) temp = sensorTemp
-        }
-        else if (mode.indexOf("cool") >= 0)
-        {
-            if (temp < sensorTemp) temp = sensorTemp
+        /* groovylint-disable-next-line ImplicitClosureParameter, NoFloat */
+        Float sensorTemp = Float.parseFloat(it.currentState('temperature').value)
+        if (mode.indexOf('heat') >= 0) {
+            if (temp > sensorTemp) { temp = sensorTemp }
+        } else if (mode.indexOf('cool') >= 0) {
+            if (temp < sensorTemp) { temp = sensorTemp }
         }
     }
     return temp
 }
 
-def debugLogState() {
-    def s = "${app.label}\n"
+void debugLogState() {
+    String s = "${app.label}\n"
     s += "Thermostat: ${selectedThermostat.label} (${thermostatTemperature()}°) set to ${thermostatSetpoint()}° and ${thermostatState()}\n"
     remoteSensors.each {
-        s += "Remote Sensor: ${it.label} is ${it.currentState("temperature").value}°\n"
+        /* groovylint-disable-next-line ImplicitClosureParameter */
+        s += "Remote Sensor: ${it.label} is ${it.currentState('temperature').value}°\n"
     }
-    s += "Switch: ${overrideSwitch.label} is ${overrideSwitch.currentState("switch").value}\n"
-    s += "Saved Setpoint: ${state.savedSetpoint} / Reference Sensor Temp: ${referenceSensorTemp()}"
+    s += "Switch: ${overrideSwitch.label} is ${overrideSwitch.currentState('switch').value}\n"
+    s += "Saved Setpoint: ${savedSetpoint()} / Reference Sensor Temp: ${referenceSensorTemp()}"
     debugLog(s)
 }
-def startLog6x()
-{
-    if (doLog6x)
-    {
-        runEvery1Minute("log6x")
+
+void startLog6x() {
+    if (doLog6x) {
+        runEvery1Minute('log6x')
     }
 }
-def log6x()
-{
+
+void log6x() {
     debugLogState()
     pauseExecution(10000)
     debugLogState()
@@ -169,103 +162,94 @@ def log6x()
     pauseExecution(10000)
     debugLogState()
 }
-def workWhile()
-{
+int savedSetpoint(Integer sp = null) {
+    int retVal = 0
+    if (sp == null) {
+        retVal = Integer.parseInt(setpointSensor.currentState('temperature').value)
+    } else {
+        retVal = sp
+        setpointSensor.setTemperature(sp)
+    }
+    return retVal
+}
+void workWhile() {
     // record temp
-    state.savedSetpoint = thermostatSetpoint()
-    debugLog("Saved setpoint @ ${state.savedSetpoint}°")
-    runEvery1Minute("work2x")
+    savedSetpoint(thermostatSetpoint())
+    debugLog("Saved setpoint @ ${savedSetpoint()}°")
+    runEvery1Minute('work2x')
     work2x()
 }
-def work2x()
-{
+
+void work2x() {
     work()
     pauseExecution(30000)
     work()
 }
-def workCheckCancel() {
-    def b = appIsActive()
-    if (!b)
-    {
-        unschedule("work2x");
-        debugLog("Work is cancelled.")
-        updateSetpoint(0)
+
+boolean workCheckCancel() {
+    boolean b = appIsActive()
+    if (!b) {
+        unschedule('work2x')
+        debugLog('Work is cancelled.')
+        updateTempSetpoint(0)
     }
     return b
 }
-def updateSetpoint(diff)
-{
+void updateTempSetpoint(int diff) {
     monitorSetpoints(false)
-    def newValue = state.savedSetpoint + diff
-    debugLog("updateSetpoint to ${newValue}")
-    def mode = thermostatMode().toLowerCase()
-    if (mode == "heat")
+    int newValue = savedSetpoint() + diff
+    debugLog("updateTempSetpoint to ${newValue}")
+    String mode = thermostatMode().toLowerCase()
+    if (mode == 'heat') {
         selectedThermostat.setHeatingSetpoint(newValue)
-    else if (mode == "cool")
+    } else if (mode == 'cool') {
         selectedThermostat.setCoolingSetpoint(newValue)
+    }
     pauseExecution(2000)
     monitorSetpoints(true)
 }
-def work()
-{
-    if (workCheckCancel())
-    {
-        def mode = thermostatMode().toLowerCase()
-        def refTemp = referenceSensorTemp()
-        def currentTemp = thermostatTemperature()
-        def setpoint = thermostatSetpoint()
-        def opState = thermostatState().toLowerCase()
-        if (mode.indexOf("heat") >= 0)
-        {
-            if (currentTemp < setpoint)
-            {
-                updateSetpoint(0)
-            }
-            else if (refTemp < state.savedSetpoint)
-            {
-                if (opState == "idle")
-                {
-                    updateSetpoint(5) // add 5 to saved setpoint
+
+void work() {
+    if (workCheckCancel()) {
+        String mode = thermostatMode().toLowerCase()
+        /* groovylint-disable-next-line NoFloat */
+        Float refTemp = referenceSensorTemp()
+        String opState = thermostatState().toLowerCase()
+        if (mode.indexOf('heat') >= 0) {
+            if (refTemp < savedSetpoint()) {
+                if (opState == 'idle') {
+                    updateTempSetpoint(5) // add 5 to saved setpoint
                 }
-            } else 
-            {
-                updateSetpoint(0) // return to saved setpoint
+            } else {
+                updateTempSetpoint(-5) // return to saved setpoint
             }
-        } 
-        else if (mode.indexOf("cool") >= 0)
-        {
-            if (currentTemp > setpoint)
-            {
-                updateSetpoint(0)
-            }
-            if (refTemp > state.savedSetpoint)
-            {
-                if (opState == "idle")
-                {
-                    updateSetpoint(-5)
+        } else if (mode.indexOf('cool') >= 0) {
+            if (refTemp > savedSetpoint()) {
+                if (opState == 'idle') {
+                    updateTempSetpoint(-5)
                 }
-            } else 
-            {
-                updateSetpoint(0)
+            } else {
+                updateTempSetpoint(5)
             }
         }
         debugLogState()
     }
 }
-def handleEvent(evt) {
-    if (appIsActive() && evt.device.name.toLowerCase().indexOf("thermostat") >= 0) {
-        switch(evt.name.toLowerCase()) {
-            case "coolingsetpoint":
-            case "heatingsetpoint":
+/* groovylint-disable-next-line MethodParameterTypeRequired, NoDef */
+void handleEvent(def evt) {
+    if (appIsActive() && evt.device.name.toLowerCase().indexOf('thermostat') >= 0) {
+        switch (evt.name.toLowerCase()) {
+            case 'coolingsetpoint':
+            case 'heatingsetpoint':
                 debugLog("Setpoint updated via Thermostat ${evt.getIntegerValue()}")
-                state.setpoint = evt.getIntegerValue()
-                break;
+                savedSetpoint(evt.getIntegerValue())
+                break
         }
-    } 
+    }
     // START/STOP
-    else if (evt.device.name.toLowerCase().indexOf("switch") >= 0) {
+    else if (evt.device.name.toLowerCase().indexOf('switch') >= 0) {
         debugLog("${app.label} is active? ${appIsActive()}")
-        if (appIsActive()) workWhile()
+        if (appIsActive()) { workWhile() }
     }
     else {
         debugLog("Name: ${evt.device.displayName} (${evt.device.name} ${evt.device.type}); Attribute: ${evt.name}; value: ${evt.value}")
