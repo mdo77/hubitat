@@ -63,17 +63,51 @@ void initialize() {
 /* groovylint-disable-next-line MethodParameterTypeRequired, NoDef, UnusedMethodParameter */
 void switchEvent(def evt) {
     if (evt.value == 'on') {
-        debugLog("${app.label} - started")
-        selectedThermostat.setThermostatFanMode('on')
-        runIn(Integer.parseInt(numMinutes, 16) * 60, switchOff)
+        subscribe(selectedThermostat, 'thermostatOperatingState', operatingStateEvent)
+        String opState = selectedThermostat.currentState('thermostatOperatingState').value
+        if (opState == 'heating' || opState == 'cooling') {
+            state.operatingState = opState
+            debugLog("Switching to fan in ${numMinutesOn} minutes")
+            runIn(Integer.parseInt(numMinutesOn) * 60, switchToFan)
+        }
     } else {
-        switchOff()
+        debugLog('Alternating fan exiting')
+        unschedule('switchToFan')
+        unschedule('switchBack')
+        switchBack(true)
     }
 }
 
-void switchOff() {
-    triggerSwitch.off()
-    debugLog("${app.label} completing.")
-    selectedThermostat.setThermostatFanMode('auto')
-    unschedule('switchOff')
+/* groovylint-disable-next-line MethodParameterTypeRequired, NoDef */
+void operatingStateEvent(def evt) {
+    debugLog("operatingStateEvent ${evt.value}")
+    if (evt.value == 'heating' || evt.value == 'cooling') {
+        runIn(Integer.parseInt(numMinutesOn) * 60, switchToFan)
+        state.operatingState = evt.value
+    } else {
+        unschedule('switchToFan')
+    }
+}
+
+void switchToFan() {
+    debugLog('Switching to fan...')
+    selectedThermostat.fanOn()
+    pauseExecution(2000)
+    selectedThermostat.off()
+    debugLog("Switching back to ${state.operatingState} in ${numMinutesOff}")
+    runIn(Integer.parseInt(numMinutesOff) * 60, switchBack)
+}
+
+void switchBack(boolean exiting = false) {
+    debugLog("Switching back to ${state.operatingState}")
+    if (state.operatingState == 'heating') {
+        selectedThermostat.heat()
+    } else {
+        selectedThermostat.cool()
+    }
+    selectedThermostat.fanAuto()
+    if (!exiting) {
+        debugLog("Switching to fan in ${numMinutesOn}")
+        runIn(Integer.parseInt(numMinutesOn) * 60, switchToFan)
+    }
 }
