@@ -62,6 +62,7 @@ void initialize() {
 
 /* groovylint-disable-next-line MethodParameterTypeRequired, NoDef, UnusedMethodParameter */
 void switchEvent(def evt) {
+    debugLog("switchEvent ${evt.value}")
     if (evt.value == 'on') {
         subscribe(selectedThermostat, 'thermostatOperatingState', operatingStateEvent)
         String opState = selectedThermostat.currentState('thermostatOperatingState').value
@@ -81,6 +82,7 @@ void switchEvent(def evt) {
 /* groovylint-disable-next-line MethodParameterTypeRequired, NoDef */
 void operatingStateEvent(def evt) {
     debugLog("operatingStateEvent ${evt.value}")
+    if (triggerSwitch.value == 'off') { return }
     if (evt.value == 'heating' || evt.value == 'cooling') {
         runIn(Integer.parseInt(numMinutesOn) * 60, switchToFan)
         state.operatingState = evt.value
