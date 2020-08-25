@@ -24,6 +24,7 @@ def mainPage() {
             input 'selectedThermostat', 'capability.thermostat', title: 'Select Thermostat', submitOnChange: true, required: true, multiple: false
             input 'remoteSensors', 'capability.temperatureMeasurement', title: 'Select Temperature Sensor(s)', submitOnChange: true, required: true, multiple: true
             input 'overrideSwitch', 'capability.switch', title: 'Activation Switch', submitOnChange: false, required: true, multiple: false
+            input 'offset', 'capability.sensor', title: 'Offset Variable', submitOnChange: false, required: true, multiple: false
             input 'debugLogging', 'bool', title: 'Use Debug Logging', submitOnChange: false, required: false
             input 'doLog6x', 'bool', title: 'Extra Logging', submitOnChange: false, required: false
             app.updateLabel(defaultLabel())
@@ -133,10 +134,11 @@ void calculateAndSetSensorCalibration() {
     debugLogState()
     debugLog("${refTemp} - ${temp} => Updating SensorCal to ${neededOffset}...")
     selectedThermostat.SensorCal(neededOffset)
+    offset.setVariable(neededOffset)
 }
 /* groovylint-disable-next-line MethodParameterTypeRequired, NoDef */
 void handleEvent(def evt) {
-    debugLog("handleEvent ${evt.name}")
+    debugLog("handleEvent ${evt.name} ${evt.value}")
     // groovy.json.JsonOutput jo = new groovy.json.JsonOutput()
     // String eventText = jo.toJson(evt)
     // debugLog(eventText)
@@ -144,7 +146,7 @@ void handleEvent(def evt) {
         calculateAndSetSensorCalibration()
     }
     // START/STOP
-    else if (evt.device.name.toLowerCase().indexOf('switch') >= 0) {
+    else if (evt.name == 'switch') {
         debugLog("${app.label} is active? ${appIsActive()}")
         if (evt.value == 'on') {
             debugLog('Starting...')
@@ -157,6 +159,7 @@ void handleEvent(def evt) {
             //unschedule('refreshAux')
             unschedule('debugLogState')
             selectedThermostat.SensorCal(0)
+            offset.setVariable(0)
         }
     }
 }
